@@ -20,9 +20,10 @@ class JobSearchApp:
         tree_frame.pack(expand=True, fill='both', padx=10, pady=10)
 
         # Create Treeview widget to display jobs
-        self.tree = ttk.Treeview(tree_frame, columns=("Title", "Location", 'Salary', "Advantages", "Description", "Checked"), show='headings')
+        self.tree = ttk.Treeview(tree_frame, columns=("ID", "Title", "Location", "Salary", "Advantages", "Description", "Checked"), show='headings')
         
         # Define column headings with a binding for sorting
+        self.tree.heading("ID", text="ID", command=lambda: self.sort_column("ID"))
         self.tree.heading("Title", text="Title", command=lambda: self.sort_column("Title"))
         self.tree.heading("Location", text="Location", command=lambda: self.sort_column("Location"))
         self.tree.heading("Salary", text="Salary", command=lambda: self.sort_column("Salary"))
@@ -31,6 +32,7 @@ class JobSearchApp:
         self.tree.heading("Checked", text="Checked", command=lambda: self.sort_column("Checked"))
 
         # Set column width to ensure all text is visible
+        self.tree.column("ID", width=50, anchor="center")
         self.tree.column("Title", width=200, anchor="w")
         self.tree.column("Location", width=150, anchor="w")
         self.tree.column("Salary", width=100, anchor="w")
@@ -121,9 +123,9 @@ class JobSearchApp:
 
             # Insert jobs into the Treeview
             for job in jobs:
-                # Interpret checked as 1 for True and 0 for False in the Treeview
-                checked = True if job[6] == 1 else False
-                self.tree.insert("", "end", values=(job[0], job[1], job[2], job[3], job[4], checked))
+                # Convert checked state to True/False for the Treeview
+                checked = bool(job[6])  # Database stores 1/0; Treeview expects True/False
+                self.tree.insert("", "end", values=(job[0], job[1], job[2], job[3], job[4], job[5], checked))
 
         except sqlite3.Error as e:
             print(f"Database error: {e}")
@@ -137,11 +139,11 @@ class JobSearchApp:
         if selected_item:  # Check if an item is selected
             selected_item = selected_item[0]  # Get the first selected item
             current_values = self.tree.item(selected_item, 'values')
-            current_value = current_values[5]  # Assuming checkbox is the 6th column
+            current_value = current_values[6]  # Assuming checkbox is the 7th column
             new_value = not eval(str(current_value))  # Toggle the checkbox state
 
             # Update the checkbox value in the Treeview
-            updated_values = current_values[:5] + (new_value,)
+            updated_values = current_values[:6] + (new_value,)
             self.tree.item(selected_item, values=updated_values)
             
             # Save the new state in the database
@@ -175,7 +177,7 @@ class JobSearchApp:
         if selected_item:
             selected_item = selected_item[0]
             job_details = self.tree.item(selected_item, 'values')
-            description = job_details[4]  # Assuming description is in the 5th column
+            description = job_details[5]  # Assuming description is in the 6th column
 
             # Create a new top-level window to display the full description
             description_window = tk.Toplevel(self.root)
